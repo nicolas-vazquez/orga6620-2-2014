@@ -2,9 +2,19 @@
 #include <stdlib.h>
 #include <getopt.h>
 
-#define true 1
 #define false 0
+#define true 1
+#define RES_OK 2
+#define RES_EOF 3
 #define BUFF_SIZE 1024
+
+struct options {
+    char* separator;
+    int starting;
+    int increment;
+    int join;
+    int blank;
+};
 
 void show_help() {
     printf("USAGE:\n");
@@ -20,25 +30,65 @@ void show_help() {
     printf("-t, --non-blank\n");
 }
 
-void nl(const char* filename, const char* separator, int *starting, int increment, int join, int blank) {
+int increment_lines(FILE* fd, int increment) {
+    int i;
+    char c;
+    for (i = 0; i < increment; i++) {
+        while ((c = fgetc(fd)) != '\n') {
+            if (c == EOF)
+                return RES_EOF;
+        }
+    }
+    return RES_OK;
+}
+
+void nl_v1(const char* filename, struct options* options) {
+    char c;
     size_t n = 0;
     FILE* fd = fopen(filename, "r");
-    char c = fgetc(fd);
     char* buf = malloc(sizeof(char) * BUFF_SIZE);
 
-    while (c != EOF) {
-        while (c != '\n') {
-            buf[n++] = c;
-            c = fgetc(fd);
-        }
-        buf[n++] = '\0';
-        printf("%d%s%s", *starting++, separator, buf);
-
-        free(buf);
-        buf = malloc(sizeof(char) * BUFF_SIZE);
-
-        c = fgetc(fd);
+    if (fd == NULL) {
+        fprintf(stderr, "Error opening file %s", filename);
+        return;
     }
+
+    if (increment_lines(fd, options->starting) == RES_EOF) {
+        free(buf);
+        fclose(fd);
+        return;
+    }
+
+    while ((c = fgetc(fd)) != EOF) {
+        if (c == '\n') {
+            if (options->blank == true)
+                while((c = fgetc(fd)) == '\n');
+
+            buf[n++] = '\0';
+            printf("%d%s%s", options->starting++, options->separator, buf);
+
+            if (increment_lines(fd, options->increment) == RES_EOF) {
+                free(buf);
+                fclose(fd);
+                return;
+            }
+
+            n = 0;
+            free(buf);
+            buf = malloc(sizeof(char) * BUFF_SIZE);
+            options->starting += options->increment - 1;
+
+            if (c != '\n')
+                buf[n++] = c;
+
+        } else {
+            buf[n++] = c;
+        }
+    }
+
+    free(buf);
+    fclose(fd);
+    return;
 }
 
 int main(int argc, char **argv)
@@ -56,8 +106,13 @@ int main(int argc, char **argv)
         {0, 0, 0, 0}
     };
 
-    char* separator = NULL;
-    int starting = 0, increment = 0, join = 0, blank = 0;
+    struct options options;
+
+    options.separator = "";
+    options.starting = 0;
+    options.increment = 0;
+    options.join = 0;
+    options.blank = false;
 
     while (1) {
         int c = getopt_long (argc, argv, "hs:v:i:l:t", long_options, &option_index);
@@ -71,30 +126,31 @@ int main(int argc, char **argv)
                 exit(EXIT_SUCCESS);
             case 's':
                 printf("number-separator: %s\n", optarg);
-                separator = optarg;
+                options.separator = optarg;
                 break;
             case 'v':
                 printf("starting-line-number: %s\n", optarg);
-                starting = atoi(optarg);
+                options.starting = atoi(optarg);
                 break;
             case 'i':
                 printf("line-increment: %s\n", optarg);
-                increment = atoi(optarg);
+                options.increment = atoi(optarg);
                 break;
             case 'l':
                 printf("join-blank-lines: %s\n", optarg);
-                join = atoi(optarg);
+                options.join = atoi(optarg);
                 break;
             case 't':
                 printf("non-blank\n");
-                blank = true;
+                options.blank = true;
                 break;
             default:
                 break;
         }
     }
 
-    //nl(filename, separator, &starting, increment, join, blank);
+    //nl_v1(filename, &options);
+    //nl_v2(filename, &options);
 
     return 0;
 }
