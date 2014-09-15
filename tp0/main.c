@@ -30,65 +30,132 @@ void show_help() {
     printf("-t, --non-blank\n");
 }
 
-int increment_lines(FILE* fd, int increment) {
+int increment_lines(FILE* fd, int increment, char* buf, unsigned long *n) {
     int i;
     char c;
-    for (i = 0; i < increment; i++) {
-        while ((c = fgetc(fd)) != '\n') {
-            if (c == EOF)
+
+    for (i = 1; i < increment; i++) {
+        while (true) {
+            if (buf) {
+                c = buf[*n];
+                *n += 1;
+            } else {
+                c = fgetc(fd);
+            }
+
+            if (c == '\n')
+                break;
+
+            if (c == EOF || c == '\0')
                 return RES_EOF;
         }
     }
+
     return RES_OK;
 }
 
 void nl_v1(const char* filename, struct options* options) {
     char c;
-    size_t n = 0;
     FILE* fd = fopen(filename, "r");
-    char* buf = malloc(sizeof(char) * BUFF_SIZE);
 
     if (fd == NULL) {
-        fprintf(stderr, "Error opening file %s", filename);
+        fprintf(stderr, "Error opening file %s\n", filename);
         return;
     }
 
-    if (increment_lines(fd, options->starting) == RES_EOF) {
-        free(buf);
+    if (increment_lines(fd, options->starting, NULL, NULL) == RES_EOF) {
         fclose(fd);
         return;
     }
 
     while ((c = fgetc(fd)) != EOF) {
-        if (c == '\n') {
-            if (options->blank == true)
-                while((c = fgetc(fd)) == '\n');
+        if (c == '\n' && options->blank)
+            while((c = fgetc(fd)) == '\n');
 
-            buf[n++] = '\0';
-            printf("%d%s%s", options->starting++, options->separator, buf);
+        printf("%d%s%c", options->starting, options->separator, c);
 
-            if (increment_lines(fd, options->increment) == RES_EOF) {
-                free(buf);
-                fclose(fd);
-                return;
-            }
-
-            n = 0;
-            free(buf);
-            buf = malloc(sizeof(char) * BUFF_SIZE);
-            options->starting += options->increment - 1;
-
-            if (c != '\n')
-                buf[n++] = c;
-
-        } else {
-            buf[n++] = c;
+        if (c != '\n') {
+            while ((c = fgetc(fd)) != '\n')
+                printf("%c", c);
+            printf("\n");
         }
+
+        if (increment_lines(fd, options->increment, NULL, NULL) == RES_EOF) {
+            fclose(fd);
+            return;
+        }
+
+        if (!options->increment)
+            options->starting += 1;
+        else
+            options->starting += options->increment;
     }
 
-    free(buf);
     fclose(fd);
     return;
+}
+
+void nl_v2(const char* filename, struct options* options) {
+    char c;
+    size_t b = 0;
+    unsigned long a = 0;
+    FILE* fd = fopen(filename, "r");
+
+    if (fd == NULL) {
+        fprintf(stderr, "Error opening file %s\n", filename);
+        return;
+    }
+
+    fseek(fd, 0L, SEEK_END);
+    unsigned long bufsize = ftell(fd);
+    char* fbuf = malloc(sizeof(char) * bufsize);
+    char* lbuf = malloc(sizeof(char) * BUFF_SIZE);
+
+    fseek(fd, 0L, SEEK_SET);
+    fread(fbuf, sizeof(char), bufsize, fd);
+    fbuf[bufsize - 1] = '\0';
+
+    fclose(fd);
+
+    if (increment_lines(NULL, options->starting, fbuf, &a) == RES_EOF) {
+        free(fbuf);
+        free(lbuf);
+        return;
+    }
+
+    while ((c = fbuf[a++]) != '\0') {
+        if (c == '\n' && options->blank) {
+            while ((c = fbuf[a++]) == '\n');
+        }
+
+        if (c != '\n') {
+            lbuf[b++]=c;
+            while ((c=fbuf[a++]) != '\n' && a < bufsize)
+                lbuf[b++] = c;
+        }
+
+        lbuf[b++]='\0';
+
+        printf("%d%s%s\n", options->starting, options->separator, lbuf);
+
+        b=0;
+        free(lbuf);
+        lbuf = malloc(sizeof(char) * BUFF_SIZE);
+
+        if (increment_lines(NULL, options->increment, fbuf, &a) == RES_EOF) {
+            free(fbuf);
+            free(lbuf);
+            return;
+        }
+
+        if (!options->increment)
+            options->starting += 1;
+        else
+            options->starting += options->increment;
+    }
+
+    free(fbuf);
+    free(lbuf);
 }
 
 int main(int argc, char **argv)
@@ -109,7 +176,7 @@ int main(int argc, char **argv)
     struct options options;
 
     options.separator = "";
-    options.starting = 0;
+    options.starting = 1;
     options.increment = 0;
     options.join = 0;
     options.blank = false;
@@ -149,8 +216,12 @@ int main(int argc, char **argv)
         }
     }
 
-    //nl_v1(filename, &options);
-    //nl_v2(filename, &options);
+    if (optind < argc) {
+
+    }
+
+    nl_v1(argv[optind], &options);
+    //nl_v2(argv[optind], &options);
 
     return 0;
 }
