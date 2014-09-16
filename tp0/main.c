@@ -71,6 +71,17 @@ void nl_v1(const char* filename, struct options* options) {
     while ((c = fgetc(fd)) != EOF) {
         if (c == '\n' && options->blank)
             while((c = fgetc(fd)) == '\n');
+        else if (c == '\n' && options->join > 0) {
+            int i = 0;
+            while (++i < options->join) {
+                if ((c = fgetc(fd)) != '\n')
+                    break;
+            }
+            if (i < options->join) {
+                fseek(fd, (long)-i-1, SEEK_CUR);
+                c = fgetc(fd);
+            }
+        }
 
         printf("%d%s%c", options->starting, options->separator, c);
 
@@ -96,9 +107,10 @@ void nl_v1(const char* filename, struct options* options) {
 }
 
 void nl_v2(const char* filename, struct options* options) {
-    char c;
+    char c;    
     size_t b = 0;
     unsigned long a = 0;
+
     FILE* fd = fopen(filename, "r");
 
     if (fd == NULL) {
@@ -126,6 +138,16 @@ void nl_v2(const char* filename, struct options* options) {
     while ((c = fbuf[a++]) != '\0') {
         if (c == '\n' && options->blank) {
             while ((c = fbuf[a++]) == '\n');
+        } else if (c == '\n' && options->join > 0) {
+            int i = 0;
+            while (++i < options->join) {
+                if ((c = fbuf[a++]) != '\n')
+                    break;
+            }
+            if (i < options->join) {
+                a -= i + 1;
+                c = fbuf[a++];
+            }
         }
 
         if (c != '\n') {
@@ -220,8 +242,8 @@ int main(int argc, char **argv)
 
     }
 
+    //nl_v1(argv[optind], &options);
     nl_v1(argv[optind], &options);
-    //nl_v2(argv[optind], &options);
 
     return 0;
 }
