@@ -4,8 +4,6 @@
 
 #define false 0
 #define true 1
-#define RES_OK 2
-#define RES_EOF 3
 #define BUFF_SIZE 1024
 
 struct options {
@@ -30,56 +28,22 @@ void show_help() {
     printf("-t, --non-blank\n");
 }
 
-int increment_lines(FILE* fd, int increment, char* buf, unsigned long *n) {
-    int i;
+void nl_v1(FILE* fd, struct options* options) {
     char c;
-
-    for (i = 1; i < increment; i++) {
-        while (true) {
-            if (buf) {
-                c = buf[*n];
-                *n += 1;
-            } else {
-                c = fgetc(fd);
-            }
-
-            if (c == '\n')
-                break;
-
-            if (c == EOF || c == '\0')
-                return RES_EOF;
-        }
-    }
-
-    return RES_OK;
-}
-
-void nl_v1(const char* filename, struct options* options) {
-    char c;
-    FILE* fd = fopen(filename, "r");
-
-    if (fd == NULL) {
-        fprintf(stderr, "Error opening file %s\n", filename);
-        return;
-    }
-
-    if (increment_lines(fd, options->starting, NULL, NULL) == RES_EOF) {
-        fclose(fd);
-        return;
-    }
+    int i = 0;
 
     while ((c = fgetc(fd)) != EOF) {
-        if (c == '\n' && options->blank)
-            while((c = fgetc(fd)) == '\n');
-        else if (c == '\n' && options->join > 0) {
-            int i = 0;
+        if (c == '\n' && options->blank) {
+            while(c == '\n') {
+                printf("%c", c);
+                c = fgetc(fd);
+            }
+        } else if (c == '\n' && options->join > 0) {
             while (++i < options->join) {
                 if ((c = fgetc(fd)) != '\n')
                     break;
-            }
-            if (i < options->join) {
-                fseek(fd, (long)-i-1, SEEK_CUR);
-                c = fgetc(fd);
+                else
+                    printf("%c", c);
             }
         }
 
@@ -91,32 +55,18 @@ void nl_v1(const char* filename, struct options* options) {
             printf("\n");
         }
 
-        if (increment_lines(fd, options->increment, NULL, NULL) == RES_EOF) {
-            fclose(fd);
-            return;
-        }
-
         if (!options->increment)
             options->starting += 1;
         else
             options->starting += options->increment;
     }
-
-    fclose(fd);
-    return;
 }
 
-void nl_v2(const char* filename, struct options* options) {
-    char c;    
+void nl_v2(FILE* fd, struct options* options) {
+    char c;
+    int i = 0;
     size_t b = 0;
     unsigned long a = 0;
-
-    FILE* fd = fopen(filename, "r");
-
-    if (fd == NULL) {
-        fprintf(stderr, "Error opening file %s\n", filename);
-        return;
-    }
 
     fseek(fd, 0L, SEEK_END);
     unsigned long bufsize = ftell(fd);
@@ -127,26 +77,18 @@ void nl_v2(const char* filename, struct options* options) {
     fread(fbuf, sizeof(char), bufsize, fd);
     fbuf[bufsize - 1] = '\0';
 
-    fclose(fd);
-
-    if (increment_lines(NULL, options->starting, fbuf, &a) == RES_EOF) {
-        free(fbuf);
-        free(lbuf);
-        return;
-    }
-
     while ((c = fbuf[a++]) != '\0') {
         if (c == '\n' && options->blank) {
-            while ((c = fbuf[a++]) == '\n');
+            while (c == '\n') {
+                printf("%c", c);
+                c = fbuf[a++];
+            }
         } else if (c == '\n' && options->join > 0) {
-            int i = 0;
             while (++i < options->join) {
                 if ((c = fbuf[a++]) != '\n')
                     break;
-            }
-            if (i < options->join) {
-                a -= i + 1;
-                c = fbuf[a++];
+                else
+                    printf("%c", c);
             }
         }
 
@@ -164,12 +106,6 @@ void nl_v2(const char* filename, struct options* options) {
         free(lbuf);
         lbuf = malloc(sizeof(char) * BUFF_SIZE);
 
-        if (increment_lines(NULL, options->increment, fbuf, &a) == RES_EOF) {
-            free(fbuf);
-            free(lbuf);
-            return;
-        }
-
         if (!options->increment)
             options->starting += 1;
         else
@@ -182,6 +118,9 @@ void nl_v2(const char* filename, struct options* options) {
 
 int main(int argc, char **argv)
 {
+    int i;
+    FILE* fd;
+    char** f = NULL;
     int option_index = 0;
 
     const struct option long_options[] =
@@ -197,7 +136,7 @@ int main(int argc, char **argv)
 
     struct options options;
 
-    options.separator = "";
+    options.separator = " ";
     options.starting = 1;
     options.increment = 0;
     options.join = 0;
@@ -214,23 +153,18 @@ int main(int argc, char **argv)
                 show_help();
                 exit(EXIT_SUCCESS);
             case 's':
-                printf("number-separator: %s\n", optarg);
                 options.separator = optarg;
                 break;
             case 'v':
-                printf("starting-line-number: %s\n", optarg);
                 options.starting = atoi(optarg);
                 break;
             case 'i':
-                printf("line-increment: %s\n", optarg);
                 options.increment = atoi(optarg);
                 break;
             case 'l':
-                printf("join-blank-lines: %s\n", optarg);
                 options.join = atoi(optarg);
                 break;
             case 't':
-                printf("non-blank\n");
                 options.blank = true;
                 break;
             default:
@@ -239,11 +173,20 @@ int main(int argc, char **argv)
     }
 
     if (optind < argc) {
-
+        f = argv + optind;
+        for (i = 0; i < argc - optind; ++i) {
+            fd = fopen(f[i], "r");
+            if (fd != NULL) {
+                nl_v1(fd, &options);
+                fclose(fd);
+            } else {
+                fprintf(stderr, "Error opening file %s\n", f[i]);
+            }
+        }
+    } else {
+        nl_v1(stdin, &options);
+        //nl_v2(stdin, &options);
     }
-
-    //nl_v1(argv[optind], &options);
-    nl_v1(argv[optind], &options);
 
     return 0;
 }
