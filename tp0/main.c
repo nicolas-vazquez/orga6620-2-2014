@@ -21,7 +21,6 @@ void write_line(FILE* fd, struct Options* options, char* c, int header){
 	}else{
 		printf("%c", *c);
 	}
-	//fflush(stdout);
 
 }
 
@@ -45,19 +44,15 @@ void skip_blanks(FILE* fd, struct Options* options, int* i, char* c){
     if (*c == '\n' && options->blank) {
         while(*c == '\n') {
             write_line(fd, options, c, 0);
-	    //printf("%c", *c);
-            //*c = fgetc(fd);
 	    fscanf(fd, "%c", c);
         }
     } else if (*c == '\n' && options->join > 0) {
         while (++(*i) < options->join) {
             fscanf(fd, "%c", c);
 	    if(*c != '\n')
-	    //if ((*c = fgetc(fd)) != '\n')
                 break;
             else
 	        write_line(fd, options, c, 0);                
-		//printf("%c", *c);
         }
     }
 
@@ -76,14 +71,11 @@ void parse_line(FILE* fd, struct Options* options, char* c){
 	write_line(fd, options, c, 1);
 	if (*c != '\n') {
 	    fscanf(fd, "%c", c); 
-            //while ((*c = fgetc(fd)) != '\n')
 	    while (*c != '\n'){
 		write_line(fd, options, c, 0);                
-		//printf("%c", *c);
 		fscanf(fd, "%c", c);
 		}
             write_line(fd, options, "\n", 0);
-	    //printf("\n");
         }
 
 }
@@ -114,7 +106,6 @@ void skip_blanks_v2(struct Options* options, int* i, char* c, char* fbuf, long* 
     if (*c == '\n' && options->blank) {
         while(*c == '\n') {
             write_line_v2(NULL, options, c, 0);
-	    //printf("%c", *c);
             *c = fbuf[(*a)++];
         }
     } else if (*c == '\n' && options->join > 0) {
@@ -136,15 +127,9 @@ void parse_line_v2(struct Options* options, char* c, int* b, long* a, char* lbuf
 	    if (j == 0){
 		j = strchr(fbuf + (*a)*sizeof(char), '\0');
 	    }
-		//printf("j: %d\n", j);
 	    *b = j - (fbuf + (*a)*sizeof(char)) + 1;
-		//printf("b: %d\n", *b);
 	    strncpy(lbuf + sizeof(char), fbuf + (*a)*sizeof(char), *b);
 	    *a += *b;
-	    //lbuf[(*b)++] = '\0';
-	    //printf("%s", lbuf);
-	    //while ((*c=fbuf[(*a)++]) != '\n' && *a < bufsize)
-            //    lbuf[(*b)++] = *c;
         }
 
 }
@@ -176,8 +161,6 @@ void nl_v2(FILE* fd, struct Options* options) {
 
 
         b=0;
-        //free(lbuf);
-        //lbuf = malloc(sizeof(char) * BUFF_SIZE);
 
         increment(options);
     }
