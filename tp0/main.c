@@ -21,7 +21,7 @@ void write_line(FILE* fd, struct Options* options, char* c, int header){
 	}else{
 		printf("%c", *c);
 	}
-	fflush(stdout);
+	//fflush(stdout);
 
 }
 
@@ -46,11 +46,14 @@ void skip_blanks(FILE* fd, struct Options* options, int* i, char* c){
         while(*c == '\n') {
             write_line(fd, options, c, 0);
 	    //printf("%c", *c);
-            *c = fgetc(fd);
+            //*c = fgetc(fd);
+	    fscanf(fd, "%c", c);
         }
     } else if (*c == '\n' && options->join > 0) {
         while (++(*i) < options->join) {
-            if ((*c = fgetc(fd)) != '\n')
+            fscanf(fd, "%c", c);
+	    if(*c != '\n')
+	    //if ((*c = fgetc(fd)) != '\n')
                 break;
             else
 	        write_line(fd, options, c, 0);                
@@ -72,9 +75,13 @@ void parse_line(FILE* fd, struct Options* options, char* c){
 	        
 	write_line(fd, options, c, 1);
 	if (*c != '\n') {
-            while ((*c = fgetc(fd)) != '\n')
+	    fscanf(fd, "%c", c); 
+            //while ((*c = fgetc(fd)) != '\n')
+	    while (*c != '\n'){
 		write_line(fd, options, c, 0);                
 		//printf("%c", *c);
+		fscanf(fd, "%c", c);
+		}
             write_line(fd, options, "\n", 0);
 	    //printf("\n");
         }
@@ -247,16 +254,16 @@ int main(int argc, char **argv)
         for (i = 0; i < argc - optind; ++i) {
             fd = fopen(f[i], "r");
             if (fd != NULL) {
-                //nl_v1(fd, &options);
-		nl_v2(fd, &options);
+                nl_v1(fd, &options);
+		//nl_v2(fd, &options);
                 fclose(fd);
             } else {
                 fprintf(stderr, "Error opening file %s\n", f[i]);
             }
         }
     } else {
-        //nl_v1(stdin, &options);
-        nl_v2(stdin, &options);
+        nl_v1(stdin, &options);
+        //nl_v2(stdin, &options);
     }
 
     return 0;
