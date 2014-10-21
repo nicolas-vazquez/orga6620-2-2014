@@ -1,0 +1,41 @@
+<doc>
+<tag1>titulo</tag1>
+<tag2>subtitulo</tag2>
+<tag3>primer parrafo
+	<primer_renglon>asd1</primer_renglon>
+	<segundo_renglon>asd2</segundo_renglon>
+	<tercer_renglon>asd3</tercer_renglon>
+	<cuarto_renglon>asd4</cuarto_renglon>
+	<quinto_renglon>asd5</quinto_renglon>
+	<sexto_renglon>asd6</sexto_renglon>
+	<septimo_renglon>asd7</septimo_renglon></tag3>
+<tag4>segundo parrafo
+	<primer_renglon>asd1</primer_renglon>
+	<segundo_renglon>asd2</segundo_renglon>
+	<tercer_renglon>asd3</tercer_renglon>
+	<cuarto_renglon>asd4</cuarto_renglon>
+	<quinto_renglon>asd5</quinto_renglon>
+	<sexto_renglon>asd6</sexto_renglon>
+	<septimo_renglon>asd7</septimo_renglon></tag4>
+<tag5>tercer parrafo
+	<primer_renglon>asd1</primer_renglon>
+	<segundo_renglon>asd2</segundo_renglon>
+	<tercer_renglon>asd3</tercer_renglon>
+	<cuarto_renglon>asd4</cuarto_renglon>
+	<quinto_renglon>asd5
+	<sexto_renglon>asd6</sexto_renglon>
+	<septimo_renglon>asd7</septimo_renglon></tag5></quinto_renglon>
+<tag6>cuarto parrafo
+	<primer_renglon>asd1</primer_renglon>
+	<segundo_renglon>asd2</segundo_renglon>
+		<bullet1>bullet1</bullet1>
+		<bullet2>bullet2</bullet2>
+		<bullet3>bullet3</bullet3>
+		<bullet4>bullet4</bullet4>
+	<tercer_renglon>asd3</tercer_renglon>
+	<cuarto_renglon>asd4</cuarto_renglon>
+	<sexto_renglon>asd6</sexto_renglon>
+	<quinto_renglon>asd5</quinto_renglon>
+	<septimo_renglon>asd7</septimo_renglon></tag6>
+<tag11>conclusion</tag11>
+</doc>
