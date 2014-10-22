@@ -7,16 +7,16 @@ DEFAULT = mips
 as_validate: validate.S
 	$(CC) $(C99FLAGS) validate.S
 
-as_main: main.c
-	$(CC) $(C99FLAGS) main.c utils.c
+as_main: mainAsmb.c
+	$(CC) $(C99FLAGS) mainAsmb.c utils.c
 
-c_main: mainC.c
-	$(CC) $(C99FLAGS) mainC.c parser.c utils.c
+c_main: main.c
+	$(CC) $(C99FLAGS) main.c parser.c utils.c
 
-c_as_main: mainC.c
-	$(CC) $(C99FLAGS) -S mainC.c parser.c utils.c
+c_as_main: main.c
+	$(CC) $(C99FLAGS) -S main.c parser.c utils.c
 
-mips: as_main as_Stoogesort
+mips: as_main as_validate
 	$(CC) main.o validate.o utils.o -o $(PROG)
 
 generic: c_main

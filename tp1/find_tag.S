@@ -1,78 +1,98 @@
 #include <mips/regdef.h>
+#include <sys/syscall.h>
+
+#define FIND_TAG_SSIZE  (8)
+
+#define FIND_TAG_FP     ((FIND_TAG_SSIZE) - 4 )
+#define FIND_TAG_GP     ((FIND_TAG_SSIZE) - 8)
+
+#define FIND_TAG_A0     ((FIND_TAG_SSIZE) + 12)
+#define FIND_TAG_A1     ((FIND_TAG_SSIZE) + 8)
+#define FIND_TAG_A2     ((FIND_TAG_SSIZE) + 4)
+#define FIND_TAG_A3     ((FIND_TAG_SSIZE) + 0)
+
 
 	.text
 	.align 	2
 	.globl	find_tag
 	.ent	find_tag
 
+
+//######################################################################
+// int find_tag(char* file, int* line, char* newtag, int newtag_length)#
+//######################################################################
 find_tag:
-	subu $sp, $sp, 32
+		.frame  $fp, FIND_TAG_SSIZE, ra
+                .set    noreorder
+                .cpload t9
+                .set    reorder
+                subu    sp,sp,FIND_TAG_SSIZE
 
-	sw $t0, 28($sp)
-	sw $t1, 24($sp)
-	sw $t2, 20($sp)
-	sw $t3, 16($sp)
-	sw $t4, 12($sp)
+                .cprestore      FIND_TAG_GP
+                sw      $fp,FIND_TAG_FP(sp)
+                sw      gp,FIND_TAG_GP(sp)
+                move    $fp,sp
 
-	sw $fp, 8($sp)
-	sw $gp, 4($sp)
+                sw      a0,FIND_TAG_A0($fp)     #build arg area char* fbuf
+                sw      a1,FIND_TAG_A1($fp)     #int* line
+                sw      a2,FIND_TAG_A2($fp)     #char* newtag
+                sw      a3,FIND_TAG_A3($fp)     #int newtag_length
 
-	move $fp, $sp
-
-	lw $t0, 0($a0)	# $t0 = *file
-	lw $t1, 0($a2)	# $t1 = *tag
-	lw $t2, 0($t0)	# $t2 = **file
-	lw $t3, 0($a1)	# $t3 = line
-	lw $t4, 0($a3)	# $t4 = length
-	
-	move $t1, $t0	# *tag = *file
+		move 	t0, a0			# $t0 = *file
+		lw 	t1, 0(a1)		# $t1 = line
+		move 	t2, a2			# $t2 = *tag
+		move 	t3, a3			# $t3 = length
+		li	t5, 60			# t5 = <
+		li	t6, 62			# t6 = >
+		li	t7, 10			# t7 = \n
 
 loop1:
-	beq $t2, $zero, return_1
-	beq $t2, '<', fin_loop1
-	addi $t0, $t0, 1
-	addi $t1, $t1, 1
-	beq $t2, '\n', inc_line
-	j loop1
+		lb      t4,0(t0)                #t4 <- file[0]
+		beq 	t4, 0, return_1
+		beq 	t4, t5, fin_loop1
+		addi 	t0, t0, 1
+		beq 	t4, t7, inc_line
+		j 	loop1
 
 inc_line:
-	addi $t3, $t3, 1
-	j loop1	
+		addi 	t1, t1, 1
+		j 	loop1	
 
 fin_loop1:
-	addi $t0, $t0, 1
-	addi $t1, $t1, 1
+		addi 	t0, t0, 1
+		move	t2, t0		
 
 loop2:
-	beq $t0, $zero, return_1
-	beq $t2, '>', fin_loop2
-	addi $t4, $t4, 1
-	addi $t0, $t0, 1
-	j loop2
+		lb      t4, 0(t0)               #t4 <- file[0]
+		beq 	t4, 0, return_1
+		beq 	t4, t6, fin_loop2
+		addi 	t3, t3, 1
+		addi 	t0, t0, 1
+		j 	loop2
 
 fin_loop2:
-	addi $t0, $t0, 1
-	j return_0
+		addi 	t0, t0, 1
+		j 	return_0
 
 return_0:
-	addi $v0, $zero, 0
-	j exit
+		li 	v0, 0
+		j 	exit
 
 return_1:
-	addi $v0, $zero, 1
-	j exit
+		li 	v0, 1
+		j 	exit
 
 exit:
-	move $sp, $fp
-	lw $gp, 4($sp)
-	lw $fp, 8($sp)
-	lw $t4, 12($sp)
-	lw $t3, 16($sp)
-	lw $t2, 20($sp)
-	lw $t1, 24($sp)
-	lw $t0, 28($sp)
-	addi $sp, $sp, 48
-	jr $ra
+                sw	t0, FIND_TAG_A0($fp)
+                sw      t1, 0(a1)
+                sw      t2, FIND_TAG_A2($fp)
+                sw      t3, FIND_TAG_A3($fp)
+                
+                move    sp,$fp
+                lw      $fp,FIND_TAG_FP(sp)
+                lw      gp,FIND_TAG_GP(sp)
+                addu    sp,sp, FIND_TAG_SSIZE
+                j       ra
+                .end    find_tag
 
-	.end find_tag
-
+	
