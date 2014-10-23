@@ -6,7 +6,10 @@ DEFAULT = mips
 
 as_validate: validate.S
 	$(CC) $(C99FLAGS) validate.S
-
+as_find_tag: find_tag.S
+	$(CC) $(C99FLAGS) find_tag.S
+as_parse: parse.S
+	$(CC) $(C99FLAGS) parse.S
 as_main: mainAsmb.c
 	$(CC) $(C99FLAGS) mainAsmb.c utils.c
 
@@ -16,11 +19,11 @@ c_main: main.c
 c_as_main: main.c
 	$(CC) $(C99FLAGS) -S main.c parser.c utils.c
 
-mips: as_main as_validate
-	$(CC) main.o validate.o utils.o -o $(PROG)
+mips: as_main as_validate as_find_tag as_parse
+	$(CC) mainAsmb.o validate.o find_tag.o parse.o utils.o -o $(PROG)
 
 generic: c_main
-	$(CC) mainC.o parser.o utils.o -o $(PROG)
+	$(CC) main.o parser.o utils.o -o $(PROG)
 
 generic-as: c_as_main 
 
