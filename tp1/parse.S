@@ -38,30 +38,29 @@ parse:
                 subu    sp,sp,PARSE_SSIZE
 
                 .cprestore      PARSE_GP
-                sw      $fp,PARSE_FP(sp)
-                sw      gp,PARSE_GP(sp)
-                sw      ra,PARSE_RA(sp)
-                move    $fp,sp
+                sw      $fp, PARSE_FP(sp)
+                sw      gp, PARSE_GP(sp)
+                sw      ra, PARSE_RA(sp)
+                move    $fp, sp
 
-                sw      a0,PARSE_A0($fp)     #build arg area char* fbuf
-                sw      a1,PARSE_A1($fp)     #int* line
-                sw      a2,PARSE_A2($fp)     #char* oldtag
-                sw      a3,PARSE_A3($fp)     #int* oldtag_length
+                sw      a0, PARSE_A0($fp)     #build arg area char* fbuf
+                sw      a1, PARSE_A1($fp)     #int* line
+                sw      a2, PARSE_A2($fp)     #char* oldtag
+                sw      a3, PARSE_A3($fp)     #int* oldtag_length
   
 		
-                move    t1,a0                   #t1 = file*
-                sw      t1,PARSE_T1($fp)
-		li	t7,0			#newtag_length = 0
-		sw	t7,NEWTAG_L($fp)	#t7 = newtag_length
-                li	t6,0			#*newtag = 0
+                move    t1, a0                   #t1 = file*
+                sw      t1, PARSE_T1($fp)
+		li	t7, 0			#newtag_length = 0
+		sw	t7, NEWTAG_L($fp)	#t7 = newtag_length
+                li	t6, 0			#*newtag = 0
 		sw	t6, NEWTAG($fp)		#t6 = *newtag
-//		lb      t2,0(t1)                #t2 <- file[0]
-                li      v0,0
+                li      v0, 0
 $while_parse:
   		lw	t1, PARSE_T1($fp)
-                lb	t2,0(t1)
-		beqz    t2,$end_parse             #file[] != \0
-                bne     v0,zero,$end_parse           #result != 1
+                lb	t2, 0(t1)
+		beqz    t2, $end_parse             #file[] != \0
+                bne     v0, zero, $end_parse           #result != 1
 
 		lw	t1, PARSE_T1($fp)
 		move    a0, t1		 	#file**
@@ -83,18 +82,7 @@ $while_parse:
 		lw	t7, CHILD_A3($fp)
 		sw	t7, NEWTAG_L($fp)
 	
-		move	a0, t6
-		move 	a1, t7
-		sw	v0, RETURN_VAL($fp)
-		la	t9, print
-		jal 	ra, t9
 		lw	t1, PARSE_T1($fp)
-//                lb	t2, 0(t1)
-		lw	v0, RETURN_VAL($fp)
-//		j       $while_parse
-
-		
-	
 
 //-------------------------------------------------------------------//
 // aca deberia tener el new tag cargado
@@ -121,23 +109,15 @@ $while_parse:
 		beq	v0, 1, $return_zero 
 		
 $return_one: 
-		la	t9, printll
-		jal	ra,t9
-		li	v0,1
+		li	v0, 1
 		j	$end_parse
 
 $return_zero:
-		li	v0,0
+		li	v0, 0
 		j	$end_parse
 
 $recursive:
-//		la	t9, printll	
-//		jal	ra, t9	
-		lw	a0, PARSE_T1($fp)
-		la	t9, print_num
-		jal	ra, t9
-
-		lw	a0,PARSE_T1($fp)	#file*
+		lw	a0, PARSE_T1($fp)	#file*
 		lw	a1, PARSE_A1($fp)	#line*
 		lw	a2, NEWTAG($fp)		#newtag*
 		lw	a3, NEWTAG_L($fp)	#newtag_length
@@ -147,11 +127,6 @@ $recursive:
 		move	t5, a0
 		sw	t5, PARSE_T1($fp)
 	
-		move 	s0, v0
-		lw	a0, PARSE_T1($fp)
-		la	t9, print_num
-		jal	ra, t9
-		move	v0, s0
 		bne	v0, 0, $end_parse
 		j	$while_parse
 		
@@ -161,13 +136,12 @@ $end_parse:
                 lw      a1, PARSE_A1($fp)
                 lw      a2, PARSE_A2($fp)
                 lw      a3, PARSE_A3($fp)
-//                li      v0, 0
 
-                move    sp,$fp
-                lw      $fp,PARSE_FP(sp)
-                lw      gp,PARSE_GP(sp)
-                lw      ra,PARSE_RA(sp)
-                addu    sp,sp, PARSE_SSIZE
+                move    sp, $fp
+                lw      $fp, PARSE_FP(sp)
+                lw      gp, PARSE_GP(sp)
+                lw      ra, PARSE_RA(sp)
+                addu    sp, sp, PARSE_SSIZE
                 j       ra
                 .end    parse
 

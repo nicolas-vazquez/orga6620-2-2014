@@ -96,7 +96,6 @@ $end_val:
 		lw	a1, VALIDATE_A1($fp)
 		lw	a2, VALIDATE_A2($fp)
 		lw	a3, VALIDATE_A3($fp)	
-//		li	v0, 0	
  
 		move	sp,$fp
 		lw	$fp,VALIDATE_FP(sp)
