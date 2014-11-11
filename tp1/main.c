@@ -44,22 +44,30 @@ int main(int argc, char **argv)
     while (1) {
         int c = getopt_long (argc, argv, "hVi:", long_options, &option_index);
 
-        if (c == -1)
-            break;
+        if (c == -1) {
+            if (argc > 2) {
+                break;
+            } else {
+                fprintf(stderr, "ERROR: No se ha ingresado un parametro\n");
+                show_help();
+                exit(EXIT_FAILURE);
+            }
+        }
 
         switch (c) {
-        case 'h':
-            show_help();
-            exit(EXIT_SUCCESS);
-        case 'V':
-            show_version();
-            exit(EXIT_SUCCESS);
-        case 'i':
-            filename = optarg;
-            break;
-        default:
-            break;
-        }
+            case 'h':
+                show_help();
+                exit(EXIT_SUCCESS);
+            case 'V':
+                show_version();
+                exit(EXIT_SUCCESS);
+            case 'i':
+                filename = optarg;
+                break;
+            default:
+                show_help();
+                exit(EXIT_FAILURE);
+            }
     }
 
     if (strcmp(filename, "-")) {
@@ -68,7 +76,7 @@ int main(int argc, char **argv)
             result = validate_file(fd, &errmsg);
             fclose(fd);
         } else {
-            fprintf(stderr, "Error opening file %s\n", filename);
+            fprintf(stderr, "ERROR: No se ha podido abrir el archivo %s\n", filename);
         }
     } else {
         result = validate_file(stdin, &errmsg);

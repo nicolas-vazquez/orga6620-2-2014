@@ -3,24 +3,25 @@
 
 #define PARSE_SSIZE  (48)
 
-#define PARSE_FP     ((PARSE_SSIZE) - 8 )
-#define PARSE_GP     ((PARSE_SSIZE) - 12)
-#define PARSE_RA     ((PARSE_SSIZE) - 16)
+#define PARSE_RA     ((PARSE_SSIZE) - 8)
+#define PARSE_FP     ((PARSE_SSIZE) - 12)
+#define PARSE_GP     ((PARSE_SSIZE) - 16)
 
-#define PARSE_A0     ((PARSE_SSIZE) + 12)
-#define PARSE_A1     ((PARSE_SSIZE) + 8)
-#define PARSE_A2     ((PARSE_SSIZE) + 4)
-#define PARSE_A3     ((PARSE_SSIZE) + 0)
+#define PARSE_A0     ((PARSE_SSIZE) + 0)
+#define PARSE_A1     ((PARSE_SSIZE) + 4)
+#define PARSE_A2     ((PARSE_SSIZE) + 8)
+#define PARSE_A3     ((PARSE_SSIZE) + 12)
 
-#define CHILD_A0     ((PARSE_SSIZE) -36)
-#define CHILD_A1     ((PARSE_SSIZE) -40)
-#define CHILD_A2     ((PARSE_SSIZE) -44)
-#define CHILD_A3     ((PARSE_SSIZE) -48)	
+#define CHILD_A0     ((PARSE_SSIZE) - 48)
+#define CHILD_A1     ((PARSE_SSIZE) - 44)
+#define CHILD_A2     ((PARSE_SSIZE) - 40)
+#define CHILD_A3     ((PARSE_SSIZE) - 36)
 
 #define NEWTAG     ((PARSE_SSIZE)-28)
 #define PARSE_T1     ((PARSE_SSIZE)-24)
 #define NEWTAG_L     ((PARSE_SSIZE)-20)	
 #define RETURN_VAL   ((PARSE_SSIZE)-32)
+
         .text
         .globl parse
 

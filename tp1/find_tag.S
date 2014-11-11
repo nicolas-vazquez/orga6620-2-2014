@@ -3,14 +3,13 @@
 
 #define FIND_TAG_SSIZE  (8)
 
-#define FIND_TAG_FP     ((FIND_TAG_SSIZE) - 4 )
+#define FIND_TAG_FP     ((FIND_TAG_SSIZE) - 4)
 #define FIND_TAG_GP     ((FIND_TAG_SSIZE) - 8)
 
-
-#define FIND_TAG_A0     ((FIND_TAG_SSIZE) + 12)
-#define FIND_TAG_A1     ((FIND_TAG_SSIZE) + 8)
-#define FIND_TAG_A2     ((FIND_TAG_SSIZE) + 4)
-#define FIND_TAG_A3     ((FIND_TAG_SSIZE) + 0)
+#define FIND_TAG_A0     ((FIND_TAG_SSIZE) + 0)
+#define FIND_TAG_A1     ((FIND_TAG_SSIZE) + 4)
+#define FIND_TAG_A2     ((FIND_TAG_SSIZE) + 8)
+#define FIND_TAG_A3     ((FIND_TAG_SSIZE) + 12)
 
 
 	.text
@@ -98,7 +97,6 @@ exit:
                 move    sp,$fp
                 lw      $fp,FIND_TAG_FP(sp)
                 lw      gp,FIND_TAG_GP(sp)
-		lw	ra,FIND_TAG_RA(sp)
                 addu    sp,sp, FIND_TAG_SSIZE
                 j       ra
                 .end    find_tag

@@ -4,109 +4,118 @@
 #include <string.h>
 #include "utils.h"
 
-#define false 0
-#define true 1
-#define BUFF_SIZE 1024
-
-extern int validate(char* file, char** error);
-
-struct Options {
-    char* filename;
-};
+extern int validate(char* text, char** errmsg);
 
 void show_help() {
     printf("Usage:\n");
-    printf("\tvalidate -h\n");
-    printf("\tvalidate -V\n");
-    printf("\tvalidate [options] file\n");
+    printf("  validate -h\n");
+    printf("  validate -V\n");
+    printf("  validate [options] file\n");
     printf("Options:\n");
-    printf("-h, --help   Prints usage information.\n");
-    printf("-V, --version   Prints version information.\n");
-    printf("-i, --input   Path to input file (-i - for stdin)\n");
+    printf("  -h, --help     Prints usage information.\n");
+    printf("  -V, --version  Prints version information.\n");
+    printf("  -i, --input    Path to input file (-i - for stdin)\n");
     printf("Examples:\n");
-    printf("\tvalidate -i -\n");
-    printf("\tvalidate myfile.tagged\n");
-    printf("\tvalidate -i myfile.tagged\n");
+    printf("  validate -i -\n");
+    printf("  validate myfile.tagged\n");
+    printf("  validate -i myfile.tagged\n");
 }
 
 void show_version() {
-    printf("Version: 1.0\n");
+    printf("66.20 - Organización de Computadoras\n");
+    printf("Trabajo Práctico nº1: Conjunto de instrucciones MIPS\n");
+    printf("Versión 1.0 (23/10/2014)\n");
 }
 
-void fun(FILE* fd) {
-    fseek(fd, 0L, SEEK_END);
-    unsigned long bufsize = ftell(fd) + 1;
-    char* fbuf = malloc(sizeof(char) * bufsize);
-    fseek(fd, 0L, SEEK_SET);
-    fread(fbuf, sizeof(char), bufsize, fd);
-    fbuf[bufsize - 1] = '\0';
+int validate_file(FILE* fd, char** errmsg) {
+    char c;
+    int i = 0;
+    char* fbuf = NULL;
 
-//    printf("%s\n", fbuf);
+    if (fd == stdin) {
+        fbuf = malloc(sizeof(char) * 1024);
+        while ((c = fgetc(fd) != EOF)) {
+	    fbuf[i++] = c;
+	}
+    } else {
+	fseek(fd, 0L, SEEK_END);
+	unsigned long bufsize = ftell(fd) + 1;
+	fbuf = malloc(sizeof(char) * bufsize);
 
-//    int line =0;
-//    int result = 0;
-//    while(*fbuf != '\0' && result != 1) {
-//        int old_tag_length = 0;
-//        char* oldtag="";
-//        result = parser(&fbuf, &line, &oldtag, &old_tag_length);
-//    }
-	char * error = "s";
-	printf("%s\n", "hola");
-	int i =	validate(fbuf, &error);
-	printf("Salio con: %d \n", i);
-}
-
-void parse_args(struct Options* options, int argc, char **argv)
-{
-    int option_index = 0;
-    const struct option long_options[] =
-    {
-        {"help", no_argument, 0, 'h'},
-        {"version", no_argument, 0, 'v'},
-        {"input", required_argument, 0, 'i'},
-        {0, 0, 0, 0}
-    };
-	
-    while (1) {
-        int c = getopt_long (argc, argv, "hvi:", long_options, &option_index);
-
-        if (c == -1)
-            break;
-
-        switch (c) {
-            case 'h':
-                show_help();
-                exit(EXIT_SUCCESS);
-            case 'v':
-                show_version();
-                exit(EXIT_SUCCESS);
-            case 'i':
-                options->filename = optarg;
-                break;
-            default:
-                break;
-        }
+	fseek(fd, 0L, SEEK_SET);
+	fread(fbuf, sizeof(char), bufsize, fd);
+	fbuf[bufsize - 1] = '\0';
     }
+
+    int result = validate(fbuf, errmsg);
+
+    free(fbuf);
+    return result;
 }
 
 int main(int argc, char **argv)
 {
     FILE* fd;
+    int result = -1;
+    char* errmsg = NULL;
+    char* filename = NULL;
+    int option_index = 0;
 
-    struct Options options;
-    parse_args(&options, argc, argv);	
+    const struct option long_options[] =
+    {
+        {"help", no_argument, 0, 'h'},
+        {"version", no_argument, 0, 'V'},
+        {"input", required_argument, 0, 'i'},
+        {0, 0, 0, 0}
+    };
 
-    if (strcmp(options.filename, "-")) {
-            fd = fopen(options.filename, "r");
-            if (fd != NULL) {
-                fun(fd);
-                fclose(fd);
+    while (1) {
+        int c = getopt_long (argc, argv, "hVi:", long_options, &option_index);
+
+        if (c == -1) {
+        	if (argc > 2) {
+                break;
             } else {
-                fprintf(stderr, "Error opening file %s\n", options.filename);
+                fprintf(stderr, "ERROR: No se ha ingresado un parametro\n");
+                show_help();
+                return -1;
             }
-    } else {
-        fun(stdin);
+        }
+
+        switch (c) {
+	        case 'h':
+	            show_help();
+	            exit(EXIT_SUCCESS);
+	        case 'V':
+	            show_version();
+	            exit(EXIT_SUCCESS);
+	        case 'i':
+	            filename = optarg;
+	            break;
+	        default:
+	        	show_help();
+	            return -1;
+        }
     }
 
-    return 0;
+    if (strcmp(filename, "-")) {
+        fd = fopen(filename, "r");
+        if (fd != NULL) {
+            result = validate_file(fd, &errmsg);
+            fclose(fd);
+        } else {
+        	fprintf(stderr, "ERROR: No se ha podido abrir el archivo %s\n", filename);
+        }
+    } else {
+        result = validate_file(stdin, &errmsg);
+    }
+
+    if (result == 0) {
+		printf("Archivo valido\n");
+    } 
+    else if (result == 1) {
+		printf("Archivo invalido\n");
+    }
+    
+    return result;
 }
