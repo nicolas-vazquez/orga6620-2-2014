@@ -1,7 +1,7 @@
 #include <mips/regdef.h>
 #include <sys/syscall.h>
 
-#define PARSE_SSIZE  (48)
+#define PARSE_SSIZE  (56)
 
 #define PARSE_RA     ((PARSE_SSIZE) - 8)
 #define PARSE_FP     ((PARSE_SSIZE) - 12)
@@ -11,13 +11,16 @@
 #define PARSE_A1     ((PARSE_SSIZE) + 4)
 #define PARSE_A2     ((PARSE_SSIZE) + 8)
 #define PARSE_A3     ((PARSE_SSIZE) + 12)
+#define PARSE_A4     ((PARSE_SSIZE) + 16)
 
-#define CHILD_A0     ((PARSE_SSIZE) - 48)
-#define CHILD_A1     ((PARSE_SSIZE) - 44)
-#define CHILD_A2     ((PARSE_SSIZE) - 40)
-#define CHILD_A3     ((PARSE_SSIZE) - 36)
+#define CHILD_A0     ((PARSE_SSIZE) - 56)
+#define CHILD_A1     ((PARSE_SSIZE) - 52)
+#define CHILD_A2     ((PARSE_SSIZE) - 48)
+#define CHILD_A3     ((PARSE_SSIZE) - 44)
+#define CHILD_A4     ((PARSE_SSIZE) - 40)
+#define CHILD_A5     ((PARSE_SSIZE) - 36)
 
-#define NEWTAG     ((PARSE_SSIZE)-28)
+#define NEWTAG       ((PARSE_SSIZE)-28)
 #define PARSE_T1     ((PARSE_SSIZE)-24)
 #define NEWTAG_L     ((PARSE_SSIZE)-20)	
 #define RETURN_VAL   ((PARSE_SSIZE)-32)
@@ -28,9 +31,9 @@
         .align 2
         .ent parse
 
-//####################################################################
-// int parse(char* file, int* line, char* oldtag, int oldtag_length)#
-//####################################################################
+//#################################################################################
+// int parse(char* file, int* line, char* oldtag, int oldtag_length, char* errmsg)#
+//#################################################################################
 parse:
                 .frame  $fp, PARSE_SSIZE, ra
                 .set    noreorder
@@ -73,7 +76,7 @@ $while_parse:
                 la      t9, find_tag	 
                 jal     ra, t9
 
-		bne	v0,zero,$end_parse		#return error
+		bne	v0,zero,$is_eof		#return 
 	
                 lw      t1,CHILD_A0($fp)
                 sw      t1,PARSE_T1($fp)
@@ -108,13 +111,50 @@ $while_parse:
 		
 		beq	v0, 0, $return_one 
 		beq	v0, 1, $return_zero 
+
+$is_eof:
+		lw	a0, PARSE_A2($fp)
+		lw	a1, PARSE_A3($fp)
+		la	t9, is_begin_tag
+		jal	ra, t9
+
+		bne	v0, 0, $return_zero
+		li	t0, 1
+		move	a0, t0
+		j	$build_message
 		
 $return_one: 
+
+		li	t0, 2
+		move	a0, t0
+
+$build_message:		
+		lw	t0, PARSE_A2($fp)
+		move	a1, t0
+		
+		lw	t0, PARSE_A3($fp)
+		move	a2, t0
+		
+		lw	t0, NEWTAG($fp)
+		move	a3, t0
+
+		lw	t0, NEWTAG_L($fp)
+		sw	t0, CHILD_A4($fp)
+		
+		lw	t0, PARSE_A1($fp)
+		sw	t0, CHILD_A5($fp)
+
+		la	t9, create_message
+		jal	ra, t9
+
+
+		move	t1, v0
 		li	v0, 1
 		j	$end_parse
 
 $return_zero:
 		li	v0, 0
+		li	t1, 0
 		j	$end_parse
 
 $recursive:
@@ -128,15 +168,18 @@ $recursive:
 		move	t5, a0
 		sw	t5, PARSE_T1($fp)
 	
+		lw	t1, CHILD_A4($fp)
+
 		bne	v0, 0, $end_parse
 		j	$while_parse
 		
-
 $end_parse:
                 lw      a0, PARSE_T1($fp)
                 lw      a1, PARSE_A1($fp)
                 lw      a2, PARSE_A2($fp)
                 lw      a3, PARSE_A3($fp)
+		sw	t1, PARSE_A4($fp)
+
 
                 move    sp, $fp
                 lw      $fp, PARSE_FP(sp)

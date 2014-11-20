@@ -27,10 +27,11 @@ void show_version() {
     printf("Versión 1.0 (23/10/2014)\n");
 }
 
-int validate_file(FILE* fd, char** errmsg) {
+int validate_file(FILE* fd) {
     char c;
     int i = 0;
     char* fbuf = NULL;
+    char* errmsg = NULL;
 
     if (fd == stdin) {
         fbuf = malloc(sizeof(char) * 1024);
@@ -47,7 +48,11 @@ int validate_file(FILE* fd, char** errmsg) {
 	fbuf[bufsize - 1] = '\0';
     }
 
-    int result = validate(fbuf, errmsg);
+    int result = validate(fbuf, &errmsg);
+	
+    if(result == 1){
+	printf("%s\n", errmsg);	
+    }
 
     free(fbuf);
     return result;
@@ -57,7 +62,6 @@ int main(int argc, char **argv)
 {
     FILE* fd;
     int result = -1;
-    char* errmsg = NULL;
     char* filename = NULL;
     int option_index = 0;
 
@@ -101,21 +105,15 @@ int main(int argc, char **argv)
     if (strcmp(filename, "-")) {
         fd = fopen(filename, "r");
         if (fd != NULL) {
-            result = validate_file(fd, &errmsg);
+            result = validate_file(fd);
             fclose(fd);
         } else {
         	fprintf(stderr, "ERROR: No se ha podido abrir el archivo %s\n", filename);
         }
     } else {
-        result = validate_file(stdin, &errmsg);
+        result = validate_file(stdin);
     }
 
-    if (result == 0) {
-		printf("Archivo valido\n");
-    } 
-    else if (result == 1) {
-		printf("Archivo invalido\n");
-    }
     
     return result;
 }
